@@ -9,7 +9,7 @@ const config = (phase) => {
   
   return {
     reactStrictMode: true,
-    assetPrefix: isDev ? '/docs/' : 'https://docs.ticketping.com/docs/',
+    assetPrefix: isDev ? undefined : 'https://docs.ticketping.com',
   };
 };
 
