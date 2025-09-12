@@ -1,0 +1,58 @@
+---
+title: Svelte
+description: Setup Ticketping chat widget in Svelte / Sveltekit projects
+---
+
+## Quick Start
+
+The easiest way to use the Ticketping Chat Widget in Svelte:
+
+```bash
+npm install @ticketping/chat-widget
+```
+
+```svelte
+<script>
+  import TicketpingChat from '@ticketping/chat-widget/svelte';
+  import('@ticketping/chat-widget/style')
+</script>
+
+<TicketpingChat
+  appId="your-app-id"
+  teamSlug="your-team-slug"
+  teamLogoIcon="cdn-link-to-your-logo-square"
+/>
+```
+
+### With Custom Theme
+
+```svelte
+<script>
+  import TicketpingChatWidget from '@ticketping/chat-widget/svelte'
+  import('@ticketping/chat-widget/style')
+
+  export let appId = 'your-app-id'
+  export let teamSlug = 'your-team-slug'
+  export let teamLogoIcon = 'cdn-link-to-your-logo-square'
+
+  const myTheme = {
+    primaryColor: '#007BFF',          // accent color
+    primaryHover: '#0056b3',          // slightly darker accent color
+    textPrimary: '#111827',           // gray.900 (main text)
+    textSecondary: '#374151',         // gray.700 (secondary text)
+    textMuted: '#6b7280',             // gray.500 (muted text)
+    background: '#ffffff',            // white
+    backgroundSecondary: '#f3f4f6',   // gray.100
+    backgroundTertiary: '#e5e7eb',    // gray.200
+  }
+
+</script>
+
+<TicketpingChatWidget
+  {appId}
+  {teamSlug}
+  {teamLogoIcon}
+  {theme}
+/>
+
+```

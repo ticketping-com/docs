@@ -1,0 +1,21 @@
+{
+    "title": "Ticketping Documentation",
+    "description": "Documentation for Ticketping - AI Customer Support in Slack",
+    "icon": "Building",
+    "root": true,
+    "pages": [
+      "---Getting Started---",
+      "index",
+      "install-slack-app",
+      "install-chat-widget",
+      "---Chat Widget---",
+      "installation",
+      "vanilla-js",
+      "react-nextjs",
+      "nuxtjs",
+      "svelte",
+      "branding-and-theme",
+      "---Slack App---",
+      "slack-app-troubleshooting"
+    ]
+  }

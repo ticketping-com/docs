@@ -1,0 +1,169 @@
+---
+title: React / Next.js
+description: Setup Ticketping chat widget in React or Next.js projects
+---
+
+## Quick Start
+
+The easiest way to use the Ticketping Chat Widget in React/Next.js:
+
+```bash
+npm install @ticketping/chat-widget
+```
+
+```tsx
+import React, { useRef } from 'react';
+import TicketpingChat from '@ticketping/chat-widget/react';
+
+function App() {
+  const chatRef = useRef();
+
+  return (
+    <div>
+      <h1>My App</h1>
+      
+      <TicketpingChat
+        ref={chatRef}
+        appId="your-app-id"
+        teamSlug="your-team-slug"
+        teamLogoIcon="cdn-link-to-your-logo-square"
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+
+### With Custom Theme
+
+```tsx
+import React, { useRef } from 'react';
+import TicketpingChat from '@ticketping/chat-widget/react';
+
+const myTheme = {
+  primaryColor: '#007BFF',          // accent color
+  primaryHover: '#0056b3',          // slightly darker accent color
+  textPrimary: '#111827',           // gray.900 (main text)
+  textSecondary: '#374151',         // gray.700 (secondary text)
+  textMuted: '#6b7280',             // gray.500 (muted text)
+  background: '#ffffff',            // white
+  backgroundSecondary: '#f3f4f6',   // gray.100
+  backgroundTertiary: '#e5e7eb',    // gray.200
+}
+
+function App() {
+  const chatRef = useRef();
+
+  return (
+    <div>
+      <h1>My App</h1>
+      
+      <TicketpingChat
+        ref={chatRef}
+        appId="your-app-id"
+        teamSlug="your-team-slug"
+        teamLogoIcon="cdn-link-to-your-logo-square"
+        theme={myTheme}
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+## Troubleshooting
+
+If you get module resolution errors, try one of these solutions:
+
+### Update your tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "node16"  // or "bundler"
+  }
+}
+```
+
+## Your own React component
+
+If the module resolution still doesn't work, you can write your own component like this for better control.
+
+```tsx
+import { useEffect, useRef } from 'react'
+
+interface TicketpingWidgetProps {
+  appId?: string
+  teamSlug?: string
+  teamLogoIcon?: string
+  userJWT?: string
+}
+
+const myTheme = {
+  primaryColor: '#007BFF',          // accent color
+  primaryHover: '#0056b3',          // slightly darker accent color
+  textPrimary: '#111827',           // gray.900 (main text)
+  textSecondary: '#374151',         // gray.700 (secondary text)
+  textMuted: '#6b7280',             // gray.500 (muted text)
+  background: '#ffffff',            // white
+  backgroundSecondary: '#f3f4f6',   // gray.100
+  backgroundTertiary: '#e5e7eb',    // gray.200
+}
+
+const TicketpingWidget: React.FC<TicketpingWidgetProps> = ({
+  appId="your-app-id"
+  teamSlug="your-team-slug"
+  teamLogoIcon="cdn-link-to-your-logo-square"
+  userJWT,
+}) => {
+  const widgetRef = useRef<any>(null)
+  const widgetReadyRef = useRef(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const loadWidget = async () => {
+      try {
+        // Dynamic import of the widget package
+        await import('@ticketping/chat-widget')
+
+        // @ts-ignore
+        await import('@ticketping/chat-widget/style')
+
+        // Configuration object
+        const config = {
+          appId,
+          teamSlug,
+          teamLogoIcon,
+          userJWT,
+          theme: lcsTheme,
+        }
+
+        // Initialize the widget
+        widgetRef.current = window.TicketpingChat.init(config)
+      } catch (error) {
+        console.error('Failed to load Ticketping Chat Widget:', error)
+        onError?.(error)
+      }
+    }
+
+    loadWidget()
+
+    // Cleanup on unmount
+    return () => {
+      if (widgetRef.current) {
+        widgetRef.current.destroy()
+        widgetRef.current = null
+        widgetReadyRef.current = false
+      }
+    }
+  }, []) // Only run once on mount
+
+  return null // Widget renders itself into DOM
+}
+
+export default TicketpingWidget
+```
