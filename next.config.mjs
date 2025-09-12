@@ -8,6 +8,7 @@ const config = (phase) => {
   const isDev = phase === PHASE_DEVELOPMENT_SERVER
   
   return {
+    output: 'export',
     reactStrictMode: true,
     assetPrefix: isDev ? undefined : 'https://docs.ticketping.com',
   };
