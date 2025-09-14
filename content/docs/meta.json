@@ -9,11 +9,11 @@
       "install-slack-app",
       "install-chat-widget",
       "---Chat Widget---",
-      "installation",
       "vanilla-js",
       "react-nextjs",
       "nuxtjs",
       "svelte",
+      "authentication",
       "branding-and-theme",
       "---Slack App---",
       "slack-app-troubleshooting"

@@ -1,0 +1,359 @@
+---
+title: Authentication
+description: Identify authenticated user with JWT
+---
+
+By default, the Ticketping widget can be embedded without authentication.  
+If you want to **associate chats with logged-in users** from your product, you’ll need to issue a **JWT token** for each user session.
+
+## Steps
+
+### 1. Generate a JWT Secret
+- Go to Ticketping dashboard [API Keys](https://ticketping.com/dashboard/settings/api-keys).
+- Click **New API Key**.  
+- This will generate a pair of API key and JWT Secret.
+- Copy JWT Secret and keep it safe. This secret is used to sign all JWTs issued by your server.
+
+<Callout type="warn">
+Never expose this secret in your frontend code. It should only be stored on your backend.
+</Callout>
+
+### 2. Create an API in your backend codebase 
+
+You’ll need an endpoint that your frontend chat widget can call to fetch a signed JWT for the current user.  
+
+The JWT must include some user identifiers and have a short expiration (we recommend 5 minutes).
+
+| Field          | Required | Description                                    |
+| -------------- | -------- | ---------------------------------------------- |
+| `external_id`  | ✅        | Unique user ID in your system                  |
+| `email`        | ✅        | User’s email address                           |
+| `display_name` | Optional | Friendly name to show in Ticketping            |
+| `exp`          | ✅        | Expiration timestamp (short-lived recommended) |
+
+
+```ts tab="Node.js (Express)"
+import express from "express";
+import jwt from "jsonwebtoken";
+
+const app = express();
+
+// Protect this route with your own authentication middleware
+app.get("/api/ticketping/chat-jwt", (req, res) => {
+  const user = req.user; // Assume you set this via auth middleware
+
+  const payload = {
+    external_id: user.id,
+    email: user.email,
+    display_name: user.name || user.email.split("@")[0],
+    exp: Math.floor(Date.now() / 1000) + 60 * 5, // expires in 5 min
+  };
+
+  const token = jwt.sign(payload, process.env.TICKETPING_JWT_SECRET);
+
+  res.json({ jwt: token });
+});
+```
+```ts tab="Next.js API"
+import type { NextApiRequest, NextApiResponse } from "next";
+import jwt from "jsonwebtoken";
+
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Replace with your own auth logic
+  const user = { id: "123", email: "alice@example.com" };
+
+  const payload = {
+    external_id: user.id,
+    email: user.email,
+    display_name: user.email.split("@")[0],
+    exp: Math.floor(Date.now() / 1000) + 60 * 5,
+  };
+
+  const token = jwt.sign(payload, process.env.TICKETPING_JWT_SECRET!);
+
+  res.status(200).json({ jwt: token });
+}
+
+```
+```py tab="Python (FastAPI)"
+from fastapi import FastAPI, Depends
+from fastapi.responses import JSONResponse
+from datetime import datetime, timedelta, timezone
+import jwt
+
+app = FastAPI()
+
+SECRET = "your-ticketping-secret"
+
+def get_current_user():
+    # Replace with your real authentication
+    return {"id": "123", "email": "alice@example.com"}
+
+@app.get("/api/ticketping/chat-jwt")
+def ticketping_chat_jwt(user: dict = Depends(get_current_user)):
+    payload = {
+        "external_id": user["id"],
+        "email": user["email"],
+        "display_name": user["email"].split("@")[0],
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+    }
+
+    token = jwt.encode(payload, SECRET, algorithm="HS256")
+    return JSONResponse(content={"jwt": token})
+```
+```py tab="Python (Django)"
+import datetime, jwt
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from rest_framework.authentication import TokenAuthentication
+from django.conf import settings
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes((permissions.IsAuthenticated,))
+def ticketping_chat_jwt(request):
+    user = request.user
+
+    payload = {
+        "external_id": str(user.uuid),               # Unique ID in your system (required)
+        "email": user.email,                         # User email (required)
+        "display_name": user.email.split("@")[0],    # Optional display name
+        "exp": datetime.datetime.now(datetime.timezone.utc)
+               + datetime.timedelta(minutes=5),      # Expiry (required)
+    }
+
+    clean_payload = {k: v for k, v in payload.items() if v}
+
+    jwt_string = jwt.encode(clean_payload, settings.TICKETPING_JWT_SECRET)
+
+    return Response({"jwt": jwt_string}, status=status.HTTP_200_OK)
+```
+```rb tab="Ruby on Rails"
+class TicketpingController < ApplicationController
+  before_action :authenticate_user!
+
+  def chat_jwt
+    payload = {
+      external_id: current_user.id,
+      email: current_user.email,
+      display_name: current_user.email.split("@").first,
+      exp: 5.minutes.from_now.to_i
+    }
+
+    token = JWT.encode(payload, ENV["TICKETPING_JWT_SECRET"], "HS256")
+    render json: { jwt: token }
+  end
+end
+```
+```php tab="PHP Laravel"
+use Illuminate\Support\Facades\Route;
+use Firebase\JWT\JWT;
+
+Route::get('/api/ticketping/chat-jwt', function () {
+    $user = auth()->user();
+
+    $payload = [
+        "external_id" => $user->id,
+        "email" => $user->email,
+        "display_name" => explode("@", $user->email)[0],
+        "exp" => time() + (5 * 60),
+    ];
+
+    $jwt = JWT::encode($payload, env("TICKETPING_JWT_SECRET"), "HS256");
+
+    return response()->json(["jwt" => $jwt]);
+})->middleware("auth");
+```
+
+### 3. Pass the JWT to the widget
+
+On your frontend, call your new API and provide the token when initializing the widget via `userJWT` param:
+
+```js
+window.TicketpingChat.init({
+    appId: 'your-app-id',
+    teamSlug: 'your-team-slug',
+    teamLogoIcon: 'cdn-link-to-your-logo-square',
+    userJWT: 'jwt-encoded-string-returned-by-your-API'
+});
+```
+
+Examples in specific frameworks
+
+
+```tsx tab="React / Next.js"
+import React, { useEffect, useRef, useState } from 'react';
+import TicketpingChat from '@ticketping/chat-widget/react';
+
+const myTheme = {
+  primaryColor: '#007BFF',
+  primaryHover: '#0056b3',
+  textPrimary: '#111827',
+  textSecondary: '#374151',
+  textMuted: '#6b7280',
+  background: '#ffffff',
+  backgroundSecondary: '#f3f4f6',
+  backgroundTertiary: '#e5e7eb',
+};
+
+// helper function to fetch JWT
+async function fetchJwt() {
+  try {
+    const res = await fetch('/api/ticketping/chat-jwt', { credentials: 'include' });
+    if (res.ok) {
+      const { jwt } = await res.json();
+      return jwt || '';
+    }
+  } catch (err) {
+    console.error('Failed to fetch JWT:', err);
+  }
+  return '';
+}
+
+function App() {
+  const chatRef = useRef();
+  const [jwtToken, setJwtToken] = useState(null);
+  const [jwtLoaded, setJwtLoaded] = useState(false);
+
+  useEffect(() => {
+    fetchJwt().then(token => {
+      setJwtToken(token);
+      setJwtLoaded(true);
+    });
+  }, []);
+
+  return (
+    <div>
+      <h1>My App</h1>
+
+      {jwtLoaded && (
+        <TicketpingChat
+          ref={chatRef}
+          appId="your-app-id"
+          teamSlug="your-team-slug"
+          teamLogoIcon="cdn-link-to-your-logo-square"
+          theme={myTheme}
+          userJWT={jwtToken}
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;
+```
+```svelte tab="Svelte 4"
+<script>
+  import { onMount } from 'svelte'
+  import TicketpingChatWidget from '@ticketping/chat-widget/svelte4'
+  import('@ticketping/chat-widget/style')
+
+  export let appId = 'your-app-id'
+  export let teamSlug = 'your-team-slug'
+  export let teamLogoIcon = 'cdn-link-to-your-logo-square'
+
+  // local state for the token
+  let jwtToken = null
+  let jwtLoaded = false
+
+  // fetch the JWT from your backend API
+  onMount(async () => {
+
+    try {
+      const res = await fetch('/api/ticketping/chat-jwt', { credentials: 'include' })
+      if (response.ok) {
+        const { jwt } = await res.json()
+        jwtToken = jwt
+      } else {
+        jwtToken = ''
+      }
+    } catch (error) {
+      console.error('Failed to fetch JWT:', error)
+    } finally {
+      jwtLoaded = true
+    }
+  })
+
+  const theme = {
+    primaryColor: '#007BFF',
+    primaryHover: '#0056b3',
+    textPrimary: '#111827',
+    textSecondary: '#374151',
+    textMuted: '#6b7280',
+    background: '#ffffff',
+    backgroundSecondary: '#f3f4f6',
+    backgroundTertiary: '#e5e7eb'
+  }
+</script>
+
+{#if jwtLoaded}
+  <TicketpingChatWidget
+    {appId}
+    {teamSlug}
+    {teamLogoIcon}
+    {theme}
+    userJWT={jwtToken}
+  />
+{/if}
+```
+```svelte tab="Svelte 5"
+<script>
+  import TicketpingChatWidget from '@ticketping/chat-widget/svelte'
+  import('@ticketping/chat-widget/style')
+
+  let appId = 'your-app-id'
+  let teamSlug = 'your-team-slug'
+  let teamLogoIcon = 'cdn-link-to-your-logo-square'
+
+  // state
+  let jwtToken = $state(null)
+  let jwtLoaded = $state(false)
+
+  // runs once on mount
+  $effect(async () => {
+    try {
+      const res = await fetch('/api/ticketping/chat-jwt', { credentials: 'include' })
+      if (res.ok) {
+        const { jwt } = await res.json()
+        jwtToken = jwt || ''
+      } else {
+        jwtToken = ''
+      }
+    } catch (err) {
+      console.error('Failed to fetch JWT:', err)
+      jwtToken = ''
+    } finally {
+      jwtLoaded = true
+    }
+  })
+
+  const theme = {
+    primaryColor: '#007BFF',
+    primaryHover: '#0056b3',
+    textPrimary: '#111827',
+    textSecondary: '#374151',
+    textMuted: '#6b7280',
+    background: '#ffffff',
+    backgroundSecondary: '#f3f4f6',
+    backgroundTertiary: '#e5e7eb'
+  }
+</script>
+
+{#if jwtLoaded}
+  <TicketpingChatWidget
+    {appId}
+    {teamSlug}
+    {teamLogoIcon}
+    {theme}
+    userJWT={jwtToken}
+  />
+{/if}
+
+```
+
+### Security Notes
+
+- Always sign JWTs on your backend using the secret from the dashboard.
+- Keep expiration short. The widget will request a fresh token as needed.
+- Do not expose your JWT secret in frontend code or version control.
