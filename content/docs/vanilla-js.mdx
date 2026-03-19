@@ -9,13 +9,13 @@ This is the quickest way to get started.
 ## Steps
 
 1. **Add the stylesheet**  
-   Include the widget CSS in your `<head>` so the chat widget loads with the right styles.
+   Include the widget CSS in your <Pill>{"<head>"}</Pill> so the chat widget loads with the right styles.
 
 2. **Load the script**  
-   Use the minified script from `unpkg` in your `<body>`.
+   Use the minified script from <Pill>unpkg</Pill> in your <Pill>{"<body>"}</Pill>.
 
 3. **Initialize the widget**  
-   Call `window.TicketpingChat.init()` with your app’s configuration.
+   Call <Pill>window.TicketpingChat.init()</Pill> with your app’s configuration.
 
 ## Example
 
@@ -24,19 +24,22 @@ This is the quickest way to get started.
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-    <link rel="stylesheet" href="https://unpkg.com/@ticketping/chat-widget@latest/dist/widget.css">
-</head>
-<body>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@ticketping/chat-widget@latest/dist/widget.css"
+    />
+  </head>
+  <body>
     <script src="https://unpkg.com/@ticketping/chat-widget@latest/dist/widget.min.js"></script>
     <script>
-        window.TicketpingChat.init({
-            appId: 'your-app-id',
-            teamSlug: 'your-team-slug',
-            teamLogoIcon: 'cdn-link-to-your-logo-square',
-        });
+      window.TicketpingChat.init({
+        appId: "your-app-id",
+        teamSlug: "your-team-slug",
+        teamLogoIcon: "cdn-link-to-your-logo-square",
+      });
     </script>
-</body>
+  </body>
 </html>
 ```
 
@@ -48,13 +51,13 @@ npm install @ticketping/chat-widget
 ```
 
 ```js
-import TicketpingChat from '@ticketping/chat-widget';
-import '@ticketping/chat-widget/style';
+import TicketpingChat from "@ticketping/chat-widget";
+import "@ticketping/chat-widget/style";
 
 const chat = new TicketpingChat({
-    appId: 'your-app-id',
-    teamSlug: 'your-team-slug',
-    teamLogoIcon: 'cdn-link-to-your-logo-square',
+  appId: "your-app-id",
+  teamSlug: "your-team-slug",
+  teamLogoIcon: "cdn-link-to-your-logo-square",
 });
 ```
 
@@ -65,4 +68,3 @@ Want the chat widget to recognize your users? Check out our authentication guide
     Identify authenticated user with JWT
   </Card>
 </Cards>
-
