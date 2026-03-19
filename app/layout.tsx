@@ -1,5 +1,5 @@
 import '@/app/global.css';
-import { RootProvider } from 'fumadocs-ui/provider';
+import { RootProvider } from 'fumadocs-ui/provider/next';
 import SearchDialog from '@/components/search';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import type { Metadata } from 'next';
